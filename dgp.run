@@ -1,0 +1,17 @@
+#!/usr/bin/env ampl
+
+model pap.mod;
+#model ssv.mod;
+
+data graph.dat;
+
+option solver baron;
+option baron_options "outlev=1 epsr=1e-3 prfreq=1e3 maxtime=30";
+#option solver gurobi;
+#option gurobi_options "nonconvex=2";
+
+#option solver lindoglobal;
+
+solve;
+display x > dgp_graph.rlz;
+
