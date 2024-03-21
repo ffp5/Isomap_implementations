@@ -1,0 +1,12 @@
+#!/usr/bin/env ampl
+
+model ssv.mod;
+
+data graph.dat;
+
+option solver baron;
+option baron_options "outlev=1 epsr=1e-3 prfreq=1e3 maxtime=30";
+
+solve;
+display x > graph_ssv.rlz;
+
