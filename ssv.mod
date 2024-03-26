@@ -1,6 +1,4 @@
-# DGP formulation 2 (reformulate dgp1 using slacks)
 				 
-## the protein graph format
 param Kdim integer, > 0;
 param n integer, > 0;
 set V := 1..n;
