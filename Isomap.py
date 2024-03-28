@@ -122,28 +122,6 @@ def dijkstra(D):
         print("error:The graph is not symetric")
         return None
     
-def dijkstra_for_centers_tracker(D,list):
-    "" "Dijkstra algorithm that take an nx and a source node s and return an array" "" 
-    D_prime= nx.to_numpy_array(D)
-    n = D_prime.shape[0]
-    D_new=[]
-    for s in list:
-        dist = [math.inf] * n
-        dist[s] = 0
-        Q = list.copy()
-        while len(Q) > 0:
-            u = Q[0]
-            for i in Q:
-                if dist[i] < dist[u]:
-                    u = i
-            Q.remove(u)
-            for v in range(n):
-                if D_prime[u][v] != 0 and dist[v] > dist[u] + D_prime[u][v]:
-                    dist[v] = dist[u] + D_prime[u][v]
-        D_new.append(dist)
-    D_new = np.array(D_new)
-    return D_new
-
 def extract_data(file_path,dim):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -284,47 +262,67 @@ def centers_tracker_method(D):
     most_connected_nodes = sorted_nodes[0]
     # print(f'sorted_nodes={sorted_nodes}')
     Q=[i for i in range(D_prime.shape[0])]
-    centroids=[]
+    centers=[]
     reached_list=[]
-    for i in range(len(sorted_nodes)):
+    all_reached=[]
+
+    i=0
+    while len(sorted_nodes) > 0:
+        # print(f'Q={Q}')
+        # print(f'i={i}')
         add=False
         if len(Q) == 0:
             break
         u = sorted_nodes[i][0]
+
         # print(f'u={u}')
         reached=[]
-        for v in Q:
-            if D_prime[u][v] != 0.:
-                reached.append(v)
-                add=True
+        if all_reached == []:
+            for v in Q:
+                if D_prime[u][v] != 0.:
+                    reached.append(v)
+                    all_reached.append(v)
+                    add=True
+        elif u in all_reached:
+            for v in Q:
+                if D_prime[u][v] != 0.:
+                    reached.append(v)
+                    all_reached.append(v)
+                    add=True
+        # print(f'reached={reached}')
         for v in reached:
             Q.remove(v)
         reached.append(u)
         if add:
-            centroids.append(u)
+            sorted_nodes.pop(i)
+            i=0
+            # print(f'add u={u} to the centers list')
+            centers.append(u)
             reached_list.append(reached)
+        else:
+            i+=1
         
-    list=[u for u in centroids]
+    list=[u for u in centers]
 
     for i,center in enumerate(list):
         for j,reached in enumerate(reached_list.copy()):
             if center in reached and i != j:
                 reached_list[j].remove(center)
 
-    path_between_centroids=dijkstra_for_centers_tracker(D,list)
+    path_between_centers=dijkstra_for_centers_tracker(D,list)
     # print(f'list={list}')
     # print(f'reached_list={reached_list}')
-    # print(f'path_between_centroids={path_between_centroids}')
+    # print(f'path_between_centers={path_between_centers}')
     for i in range(D_prime.shape[0]):
-        i_centroid = list[next((index for index, sublist in enumerate(reached_list) if i in sublist), None)]
+        i_center = list[next((index for index, sublist in enumerate(reached_list) if i in sublist), None)]
         for j in range(i+1):
-            j_centroid = list[next((index for index, sublist in enumerate(reached_list) if j in sublist), None)]
+            j_center = list[next((index for index, sublist in enumerate(reached_list) if j in sublist), None)]
             if i != j and D_prime[i][j] == 0:
-                # print(f"i={i}, j={j}, i_centroid={i_centroid}, j_centroid={j_centroid}")
-                # print(f'D_prime[i][i_centroid]={D_prime[i][i_centroid]}')
-                # print(f'D_prime[j][j_centroid]={D_prime[j][j_centroid]}')
-                # print(f'path_between_centroids[list.index(i_centroid)][list.index(j_centroid)]={path_between_centroids[list.index(i_centroid)][list.index(j_centroid)]}')
-                D_prime[i][j]=D_prime[i][i_centroid]+D_prime[j][j_centroid]+path_between_centroids[list.index(i_centroid)][list.index(j_centroid)]
+                # print(f"i={i}, j={j}, i_center={i_center}, j_center={j_center}")
+                # print(f'D_prime[i][i_center]={D_prime[i][i_center]}')
+                # print(f'D_prime[j][j_center]={D_prime[j][j_center]}')
+                # print(f'path_between_centers[list.index(i_center)][list.index(j_center)]={path_between_centers[list.index(i_center)][list.index(j_center)]}')
+                D_prime[i][j]=D_prime[i][i_center]+D_prime[j][j_center]+path_between_centers[list.index(i_center)][list.index(j_center)]
                 D_prime[j][i]=D_prime[i][j]
             elif i != j and D_prime[i][j] != 0:
                 D_prime[i][j]=D_prime[i][j]
@@ -334,6 +332,30 @@ def centers_tracker_method(D):
     else:
         print("error:The graph is not symetric")
         return None
+
+
+def dijkstra_for_centers_tracker(D,list):
+    "" "Dijkstra algorithm that take an nx and a source node s and return an array" "" 
+    D_prime= nx.to_numpy_array(D)
+    n = D_prime.shape[0]
+    D_new=[]
+    for s in list:
+        dist = [math.inf] * n
+        dist[s] = 0
+        Q = list.copy()
+        while len(Q) > 0:
+            u = Q[0]
+            for i in Q:
+                if dist[i] < dist[u]:
+                    u = i
+            Q.remove(u)
+            for v in range(n):
+                if D_prime[u][v] != 0 and dist[v] > dist[u] + D_prime[u][v]:
+                    dist[v] = dist[u] + D_prime[u][v]
+        D_new.append(dist)
+    D_new = np.array(D_new)
+    # print(f'D_new={D_new}')
+    return D_new
 
 
 def random_method(D):
@@ -602,6 +624,15 @@ def comparison_heuristics(tries_number,number_of_nodes,eps,graph_generator_metho
         results = {}
     return comparaison_results
 
-for graph in ["Erdos Renyi","Barabasi_albert","random_regular_graph"]:
-    res=comparison_heuristics(20,15,1e-4,graph,True)
-    print(f'for graph {graph} we have the following results {res}')
+
+# for graph in ["Erdos Renyi","Barabasi_albert","random_regular_graph"]:
+#     res=comparison_heuristics(50,15,1e-4,graph,True)
+#     print(f'for graph {graph} we have the following results {res}')
+print_verbose=True #set to False to avoid printing the results
+res={}
+for graph in ["random_regular_graph","Erdos Renyi","Barabasi_albert"]:
+    res[f"isomap_{graph}"]=comparison_heuristics(50,15,1e-4,graph,print_verbose)
+    open(f'./results_{graph}.txt', 'w').write(str(res[f"isomap_{graph}"]))
+    print(f'for graph {graph} we have the following results {res[f"isomap_{graph}"]}')
+print(res)
+
